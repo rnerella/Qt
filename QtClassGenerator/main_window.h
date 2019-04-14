@@ -48,6 +48,8 @@ private:
 
     void showCopyrightDialogue();
 
+    QString saveLocation();
+
     QLabel*             m_errorLabel;
     QTimer*             m_errorClearTimer;
     CodeGenerator*      m_codeGenerator;

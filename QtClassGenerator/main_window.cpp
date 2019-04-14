@@ -1,6 +1,8 @@
 #include "main_window.h"
 #include "variable_list_model.h"
 #include "code_generator.h"
+#include "settings_file.h"
+#include "settings_widget.h"
 
 #include <QCoreApplication>
 #include <QTableView>
@@ -16,19 +18,9 @@
 #include <QTimer>
 #include <QStatusBar>
 #include <QStandardPaths>
+#include <QFileDialog>
+#include <QTabWidget>
 #include <QDebug>
-
-#include <QSettings>
-
-namespace  {
-
-const QString SETTINGS_FILE(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/.qtclasscreator.info");
-const QString COPYRIGHT_SETTINGS_KEY("copyrightContent");
-const QString AUTHOR_PLACEHOLDER("_AUTHOR_");
-const QString COMPANY_NAME_PLACEHOLDER("_COMPANY_NAME_");
-const QString DATETIME_PLACEHOLDER("_DATE_TIME_");
-
-}
 
 MainWindow::MainWindow(QWidget* parent) :
     QMainWindow(parent),
@@ -41,8 +33,14 @@ MainWindow::MainWindow(QWidget* parent) :
     m_errorClearTimer->setInterval(1500);
     m_errorClearTimer->setSingleShot(true);
 
+    auto tabbedWidget = new QTabWidget(this);
+    setCentralWidget(tabbedWidget);
+
     auto cntrlWidget = new QWidget(this);
-    setCentralWidget(cntrlWidget);
+    tabbedWidget->addTab(cntrlWidget, tr("Class Details"));
+
+    auto settingsWidget = new SettingsWidget(this);
+    tabbedWidget->addTab(settingsWidget, tr("Settings"));
 
     auto cntrlLayout = new QVBoxLayout(cntrlWidget);
 
@@ -212,22 +210,17 @@ void MainWindow::classNameChanged(const QString& className)
 
 void MainWindow::generateCodeButtonClicked()
 {
-    QSettings settings(SETTINGS_FILE, QSettings::IniFormat);
-    QString copyright(settings.value(COPYRIGHT_SETTINGS_KEY).toString());
-    if (!copyright.isEmpty()) {
-        copyright.replace(AUTHOR_PLACEHOLDER, "rnerella");
-    }
-    qDebug() << copyright;
-
     m_codeGenerator->setClassName(m_classNameInputField->text());
-    //qDebug() << m_codeGenerator->fileName();
     if (m_codeGenerator->fileName().isEmpty()) {
-        this->setError(tr("Invalid / Illegal class name"));
+        setError(tr("Invalid / Illegal class name"));
     } else {
-        m_codeGenerator->generate();
-        m_classNameInputField->clear();
-        m_baseClassNameInputField->clear();
-        m_fileNameInputField->clear();
+        QString path(saveLocation());
+        if (!path.isEmpty()) {
+            m_codeGenerator->generate(path);
+            m_classNameInputField->clear();
+            m_baseClassNameInputField->clear();
+            m_fileNameInputField->clear();
+        }
     }
 }
 
@@ -236,10 +229,10 @@ void MainWindow::variableNameChanged(const QString& varName)
     bool ok(!varName.trimmed().isEmpty());
     if (ok) {
         if (VariableListModel::instance()->nameExists(varName)) {
-            this->setError(tr("Duplicate name!"));
+            setError(tr("Duplicate name!"));
             ok = false;
         } else if (!varName.at(0).isLetter()) {
-            this->setError(tr("Illegal name!"));
+            setError(tr("Illegal name!"));
             ok = false;
         }
     }
@@ -324,11 +317,19 @@ void MainWindow::updateVariableEditButtons()
 
 void MainWindow::showCopyrightDialogue()
 {
-    QSettings settings(SETTINGS_FILE, QSettings::IniFormat);
+    SettingsFile settings;
     bool ok(false);
-    QString copyright(QInputDialog::getMultiLineText(this, qApp->applicationName(), tr("Enter Content"), settings.value(COPYRIGHT_SETTINGS_KEY).toString(), &ok));
+    QString copyright(QInputDialog::getMultiLineText(this, qApp->applicationName(),
+                                                     tr("Enter Content"),
+                                                     settings.copyrightContent(false), &ok));
     if (ok && !copyright.isEmpty()) {
+        settings.setCopyrightContent(copyright);
         qDebug() << copyright;
-        settings.setValue(COPYRIGHT_SETTINGS_KEY, copyright);
     }
+}
+
+QString MainWindow::saveLocation()
+{
+    QString path(QFileDialog::getExistingDirectory(this, qApp->applicationName(), QStandardPaths::writableLocation(QStandardPaths::HomeLocation)));
+    return path;
 }

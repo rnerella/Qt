@@ -1,7 +1,9 @@
 #include "code_generator.h"
 #include "variable_list_model.h"
+#include "settings_file.h"
 
 #include <QRegularExpression>
+#include <QFile>
 #include <QDebug>
 
 #include <iostream>
@@ -38,6 +40,11 @@ void appendSetterDeclaration(const Variable& variable, QTextStream& stream)
 void appendSetterDefinition(const Variable& variable, QTextStream& stream, const QString& tabStr, bool isQObject)
 {
     stream << endl;
+    SettingsFile settings;
+    if (settings.addFunctionBlockSeparator()) {
+        QString str(98, '-');
+        stream << "//" << str << endl;
+    }
     appendSetterDeclaration(variable, stream);
     stream << endl << "{" << endl
            << tabStr << variable.memberName() << " = p_" << variable.name() << ";" << endl;
@@ -81,10 +88,26 @@ void CodeGenerator::setClassName(const QString &className)
     }
 }
 
-void CodeGenerator::generate()
+void CodeGenerator::generate(const QString& dir)
 {
-    generateHeaderFileContent();
-    generateCppFileContent();
+    qDebug() << dir;
+    SettingsFile settings;
+    QFile headerFile(dir + "/" + m_fileName + ".h");
+    if (headerFile.open(QFile::WriteOnly | QFile::Text)) {
+        QTextStream stream(&headerFile);
+        stream << settings.formattedCopyrightContent();
+        generateHeaderFileContent(stream);
+        headerFile.close();
+    }
+    if (m_generateCpp) {
+        QFile cppFile(dir + "/" + m_fileName + ".cpp");
+        if (cppFile.open(QFile::WriteOnly | QFile::Text)) {
+            QTextStream stream(&cppFile);
+            stream << settings.formattedCopyrightContent();
+            generateCppFileContent(stream);
+            cppFile.close();
+        }
+    }
 }
 
 void CodeGenerator::setFileName(const QString& fileName)
@@ -124,10 +147,8 @@ void CodeGenerator::setGenerateCpp(bool generateCpp)
     emit generateCppChanged(m_generateCpp);
 }
 
-void CodeGenerator::generateHeaderFileContent()
+void CodeGenerator::generateHeaderFileContent(QTextStream& stream)
 {
-    QString headerFileContent;
-    QTextStream stream(&headerFileContent);
     const QString guardMacro(m_className.toUpper() + "_H");
     stream << QStringLiteral("#ifndef ") << guardMacro << endl;
     stream << QStringLiteral("#define ") << guardMacro << endl;
@@ -148,17 +169,10 @@ void CodeGenerator::generateHeaderFileContent()
     appendSetterGetters(stream);
     stream << endl << "};" << endl << endl;
     stream << QStringLiteral("#endif //") << guardMacro << endl;
-    qDebug() << headerFileContent.toLatin1().constData();
 }
 
-void CodeGenerator::generateCppFileContent()
+void CodeGenerator::generateCppFileContent(QTextStream& stream)
 {
-    if (!m_generateCpp) {
-        return;
-    }
-
-    QString cppContent;
-    QTextStream stream(&cppContent);
     stream << m_className << "::" << m_className << "(";
     if (m_isQObject) {
         stream << "QObject* prnt";
@@ -169,7 +183,6 @@ void CodeGenerator::generateCppFileContent()
     for (const auto& variable : variables) {
         ::appendSetterDefinition(variable, stream, m_tabString, m_isQObject);
     }
-    qDebug() << cppContent.toLatin1().constData();
 }
 
 void CodeGenerator::addCtrDtr(QTextStream& stream)

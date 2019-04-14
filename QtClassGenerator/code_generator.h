@@ -41,7 +41,7 @@ public:
 
 public slots:
 
-    void generate();
+    void generate(const QString& dir);
 
     void setClassName(const QString& className);
 
@@ -67,9 +67,9 @@ signals:
 
 private:
 
-    void generateHeaderFileContent();
+    void generateHeaderFileContent(QTextStream& stream);
 
-    void generateCppFileContent();
+    void generateCppFileContent(QTextStream& stream);
 
     void addCtrDtr(QTextStream& stream);
 

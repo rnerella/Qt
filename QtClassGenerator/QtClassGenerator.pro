@@ -30,11 +30,13 @@ SOURCES += \
     variable_list_model.cpp \
     code_generator.cpp \
     variable.cpp \
-    add_variable_dialogue.cpp
+    settings_file.cpp \
+    settings_widget.cpp
 
 HEADERS += \
         main_window.h \
     variable_list_model.h \
     code_generator.h \
     variable.h \
-    add_variable_dialogue.h
+    settings_file.h \
+    settings_widget.h
