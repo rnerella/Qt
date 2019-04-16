@@ -26,9 +26,15 @@ void appendGetterFunction(const Variable& variable, QTextStream& stream, const Q
            << tabStr << "}" << endl << endl;
 }
 
-void appendSetterDeclaration(const Variable& variable, QTextStream& stream)
+void appendSetterDeclaration(const Variable& variable, QTextStream& stream, const QString& className = QString())
 {
-    stream << "void " << variable.setterString() << "(";
+    stream << "void ";
+
+    if (!className.isEmpty()) {
+        stream << className << "::";
+    }
+
+    stream  << variable.setterString() << "(";
 
     if (variable.useConst()) {
         stream << "const ";
@@ -43,7 +49,7 @@ void appendSetterDeclaration(const Variable& variable, QTextStream& stream)
     stream << " p_" << variable.name() << ")";
 }
 
-void appendSetterDefinition(const Variable& variable, QTextStream& stream, const QString& tabStr, bool isQObject)
+void appendSetterDefinition(const Variable& variable, QTextStream& stream, const QString& tabStr, bool isQObject, const QString& className)
 {
     stream << endl;
     SettingsFile settings;
@@ -53,7 +59,7 @@ void appendSetterDefinition(const Variable& variable, QTextStream& stream, const
         stream << "//" << str << endl;
     }
 
-    appendSetterDeclaration(variable, stream);
+    appendSetterDeclaration(variable, stream, className);
     stream << endl << "{" << endl
            << tabStr << variable.memberName() << " = p_" << variable.name() << ";" << endl;
 
@@ -123,6 +129,8 @@ void CodeGenerator::generate(const QString& dir)
             cppFile.close();
         }
     }
+
+    VariableListModel::instance()->clear();
 }
 
 void CodeGenerator::setFileName(const QString& fileName)
@@ -207,7 +215,7 @@ void CodeGenerator::generateCppFileContent(QTextStream& stream)
     const auto& variables = VariableListModel::instance()->variables();
 
     for (const auto& variable : variables) {
-        ::appendSetterDefinition(variable, stream, m_tabString, m_isQObject);
+        ::appendSetterDefinition(variable, stream, m_tabString, m_isQObject, m_className);
     }
 }
 
@@ -307,7 +315,7 @@ void CodeGenerator::appendSetterGetters(QTextStream& stream)
                     ::appendSetterDeclaration(variable, stream);
                     stream << ";" << endl << endl;
                 } else {
-                    ::appendSetterDefinition(variable, stream, m_tabString, m_isQObject);
+                    ::appendSetterDefinition(variable, stream, m_tabString, m_isQObject, QString());
                 }
             }
         }
