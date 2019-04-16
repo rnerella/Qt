@@ -104,6 +104,7 @@ MainWindow::MainWindow(QWidget* parent) :
     newControlLayout->addWidget(m_addVariableButton);
 
     m_typeCombo->addItem(tr("<Custom>"), static_cast<QVariant::Type>(QMetaType::User));
+
     for (int i = 1; i < 125; ++i) {
         auto type = static_cast<QMetaType::Type>(i);
         QString typeName(QVariant::typeToName(i));
@@ -162,8 +163,8 @@ MainWindow::MainWindow(QWidget* parent) :
     connect(m_moveUpVarButton, &QPushButton::clicked, this, &MainWindow::moveVariableUp);
     connect(m_moveDownVarButton, &QPushButton::clicked, this, &MainWindow::moveVariableDown);
 
-    connect(VariableListModel::instance(), &QAbstractTableModel::rowsMoved, this, [&](const QModelIndex &parent, int start, int end, const QModelIndex &destination, int row) {
-//        qDebug() << parent << start << end << destination << row;
+    connect(VariableListModel::instance(), &QAbstractTableModel::rowsMoved, this, [&](const QModelIndex & parent, int start, int end, const QModelIndex & destination, int row) {
+        //        qDebug() << parent << start << end << destination << row;
         Q_UNUSED(parent);
         Q_UNUSED((start + end + row));
         m_variablesTableView->setCurrentIndex(destination);
@@ -176,6 +177,7 @@ MainWindow::MainWindow(QWidget* parent) :
     m_deleteVarButton->setEnabled(false);
     m_moveUpVarButton->setEnabled(false);
     m_moveDownVarButton->setEnabled(false);
+    m_addVariableButton->setEnabled(false);
 
     statusBar()->addWidget(new QLabel("Qt Class Generator | R Nerella", statusBar()), 1);
     statusBar()->addWidget(new QLabel(qApp->applicationVersion(), statusBar()));
@@ -188,7 +190,7 @@ MainWindow::~MainWindow()
     //delete VariableListModel::instance();
 }
 
-void MainWindow::setError(const QString &err)
+void MainWindow::setError(const QString& err)
 {
     m_errorLabel->setText(err);
     m_errorClearTimer->start();
@@ -198,6 +200,7 @@ void MainWindow::classNameChanged(const QString& className)
 {
     m_codeGenerator->setClassName(className);
     m_generateCodeButton->setEnabled(!className.isEmpty());
+
     if (className.isEmpty()) {
         m_baseClassNameInputField->clear();
         m_fileNameInputField->clear();
@@ -211,10 +214,12 @@ void MainWindow::classNameChanged(const QString& className)
 void MainWindow::generateCodeButtonClicked()
 {
     m_codeGenerator->setClassName(m_classNameInputField->text());
+
     if (m_codeGenerator->fileName().isEmpty()) {
         setError(tr("Invalid / Illegal class name"));
     } else {
         QString path(saveLocation());
+
         if (!path.isEmpty()) {
             m_codeGenerator->generate(path);
             m_classNameInputField->clear();
@@ -227,6 +232,7 @@ void MainWindow::generateCodeButtonClicked()
 void MainWindow::variableNameChanged(const QString& varName)
 {
     bool ok(!varName.trimmed().isEmpty());
+
     if (ok) {
         if (VariableListModel::instance()->nameExists(varName)) {
             setError(tr("Duplicate name!"));
@@ -243,19 +249,23 @@ void MainWindow::variableNameChanged(const QString& varName)
 void MainWindow::addVariableButtonClicked()
 {
     Variable var{m_typeCombo->currentData().type(), m_varNameInputField->text(),
-                m_isPropertyChkBox->isChecked(),
-                m_addSetterChkBox->isChecked(), m_addGetterChkBox->isChecked()};
+                 m_isPropertyChkBox->isChecked(),
+                 m_addSetterChkBox->isChecked(), m_addGetterChkBox->isChecked()};
+
     if (var.isCustomType()) {
         bool ok;
-            QString text = QInputDialog::getText(this, qApp->applicationName(),
-                                                 tr("Enter variable type:"), QLineEdit::Normal,
-                                                 "", &ok);
-            if (!ok || text.isEmpty()) {
-                return;
-            }
-            var.setTypeString(text);
-            qDebug() << text;
+        QString text = QInputDialog::getText(this, qApp->applicationName(),
+                                             tr("Enter variable type:"), QLineEdit::Normal,
+                                             "", &ok);
+
+        if (!ok || text.isEmpty()) {
+            return;
+        }
+
+        var.setTypeString(text);
+        qDebug() << text;
     }
+
     VariableListModel::instance()->add(var);
     m_varNameInputField->clear();
     m_isPropertyChkBox->setChecked(false);
@@ -268,6 +278,7 @@ void MainWindow::addVariableButtonClicked()
 void MainWindow::qObjectCheckboxToggled(bool checked)
 {
     m_codeGenerator->setIsQObject(checked);
+
     if (!checked) {
         m_variablesTableView->hideColumn(VariableListModel::RoleIsProperty);
     } else {
@@ -278,6 +289,7 @@ void MainWindow::qObjectCheckboxToggled(bool checked)
 void MainWindow::qPropertyCheckboxToggled(bool toggled)
 {
     m_addGetterChkBox->setEnabled(!toggled);
+
     if (!m_addGetterChkBox->isChecked()) {
         m_addGetterChkBox->setChecked(toggled);
     }
@@ -292,18 +304,22 @@ void MainWindow::deleteSelectedVariable()
 void MainWindow::moveVariableUp()
 {
     auto selectedIdx(m_variablesTableView->currentIndex());
+
     if (selectedIdx.isValid()) {
         VariableListModel::instance()->moveUp(selectedIdx);
     }
+
     updateVariableEditButtons();
 }
 
 void MainWindow::moveVariableDown()
 {
     auto selectedIdx(m_variablesTableView->currentIndex());
+
     if (selectedIdx.isValid()) {
         VariableListModel::instance()->moveDown(selectedIdx);
     }
+
     updateVariableEditButtons();
 }
 
@@ -320,8 +336,9 @@ void MainWindow::showCopyrightDialogue()
     SettingsFile settings;
     bool ok(false);
     QString copyright(QInputDialog::getMultiLineText(this, qApp->applicationName(),
-                                                     tr("Enter Content"),
-                                                     settings.copyrightContent(false), &ok));
+                      tr("Enter Content"),
+                      settings.copyrightContent(false), &ok));
+
     if (ok && !copyright.isEmpty()) {
         settings.setCopyrightContent(copyright);
         qDebug() << copyright;
