@@ -21,7 +21,7 @@ SettingsWidget::SettingsWidget(QWidget* parent) : QWidget(parent)
     });
     auto tabSizeSpin = new QSpinBox(this);
     tabSizeSpin->setMaximumWidth(70);
-    tabSizeSpin->setRange(4, 10);
+    tabSizeSpin->setRange(2, 10);
     formLayout->addRow(tr("Tab Size"), tabSizeSpin);
     connect(tabSizeSpin, QOverload<int>::of(&QSpinBox::valueChanged), this, [](int sz) {
         SettingsFile settings;
