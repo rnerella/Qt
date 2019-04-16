@@ -17,7 +17,7 @@ class CodeGenerator : public QObject
 
 public:
 
-    explicit CodeGenerator(QObject* prnt=nullptr);
+    explicit CodeGenerator(QObject* prnt = nullptr);
 
     const QString& className() const;
 
@@ -45,7 +45,7 @@ public slots:
 
     void setClassName(const QString& className);
 
-    void setFileName(const QString &fileName);
+    void setFileName(const QString& fileName);
 
     void setIsQObject(bool isQObject);
 
@@ -78,6 +78,14 @@ private:
     void appendQProperties(QTextStream& stream);
 
     void appendSetterGetters(QTextStream& stream);
+
+    void appendSignals(QTextStream& stream);
+
+    void appendMemberVariables(QTextStream& stream);
+
+    QString headerFileName() const;
+
+    QString cppFileName() const;
 
     QString     m_className;
     QString     m_fileName;

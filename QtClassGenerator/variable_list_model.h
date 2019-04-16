@@ -31,14 +31,14 @@ public:
 
     static VariableListModel* instance()
     {
-        static VariableListModel* instance = new VariableListModel();
+        static auto* instance = new VariableListModel();
         return instance;
     }
 
 
     ~VariableListModel() override;
 
-    int rowCount(const QModelIndex& idx=QModelIndex()) const override;
+    int rowCount(const QModelIndex& idx = QModelIndex()) const override;
 
     int columnCount(const QModelIndex& idx) const override;
 
@@ -55,6 +55,8 @@ public:
     void moveUp(const QModelIndex& idx);
 
     void moveDown(const QModelIndex& idx);
+
+    void clear();
 
 protected:
 

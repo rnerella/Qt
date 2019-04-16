@@ -117,8 +117,6 @@ MainWindow::MainWindow(QWidget* parent) :
 
     auto bottomControlWidget = new QWidget(cntrlWidget);
     auto bottomLayout = new QHBoxLayout(bottomControlWidget);
-    auto copyrightContentButton = new QPushButton(tr("Copyright Content"), bottomControlWidget);
-    bottomLayout->addWidget(copyrightContentButton);
     bottomLayout->addStretch(1);
     m_deleteVarButton = new QPushButton(tr("Delete Selected"), bottomControlWidget);
     bottomLayout->addWidget(m_deleteVarButton);
@@ -156,7 +154,6 @@ MainWindow::MainWindow(QWidget* parent) :
     connect(m_codeGenerator, &CodeGenerator::fileNameChanged, m_fileNameInputField, &QLineEdit::setText);
     connect(m_codeGenerator, &CodeGenerator::isQObjectChanged, m_isPropertyChkBox, &QCheckBox::setEnabled);
     connect(m_isPropertyChkBox, &QCheckBox::toggled, this, &MainWindow::qPropertyCheckboxToggled);
-    connect(copyrightContentButton, &QPushButton::clicked, this, &MainWindow::showCopyrightDialogue);
     connect(m_variablesTableView, &QTableView::clicked, this, &MainWindow::updateVariableEditButtons);
     connect(m_variablesTableView, &QTableView::activated, this, &MainWindow::updateVariableEditButtons);
     connect(m_deleteVarButton, &QPushButton::clicked, this, &MainWindow::deleteSelectedVariable);
@@ -329,20 +326,6 @@ void MainWindow::updateVariableEditButtons()
     m_deleteVarButton->setEnabled(selectedIdx.isValid());
     m_moveUpVarButton->setEnabled(selectedIdx.row() >= 1);
     m_moveDownVarButton->setEnabled(selectedIdx.row() < VariableListModel::instance()->rowCount() - 1);
-}
-
-void MainWindow::showCopyrightDialogue()
-{
-    SettingsFile settings;
-    bool ok(false);
-    QString copyright(QInputDialog::getMultiLineText(this, qApp->applicationName(),
-                      tr("Enter Content"),
-                      settings.copyrightContent(false), &ok));
-
-    if (ok && !copyright.isEmpty()) {
-        settings.setCopyrightContent(copyright);
-        qDebug() << copyright;
-    }
 }
 
 QString MainWindow::saveLocation()

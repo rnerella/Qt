@@ -46,8 +46,6 @@ private:
 
     void updateVariableEditButtons();
 
-    void showCopyrightDialogue();
-
     QString saveLocation();
 
     QLabel*             m_errorLabel;

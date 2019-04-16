@@ -9,12 +9,10 @@
 
 #include <QDebug>
 
-//--------------------------------------------------------------------------------------------------
 VariableListModel::VariableListModel(QObject* prnt)
     : QAbstractTableModel(prnt),
       m_variables()
 {
-//    qDebug() << "Model created!";
 }
 
 int VariableListModel::rowCount(const QModelIndex& idx) const
@@ -41,11 +39,14 @@ QVariant VariableListModel::data(const QModelIndex& idx, int role) const
 
     if (role == Qt::TextAlignmentRole) {
         int a = Qt::AlignVCenter;
+
         if (column != RoleType && column != RoleName) {
             a |= Qt::AlignHCenter;
         }
+
         return a;
     }
+
     switch (column) {
         case RoleType:
             return var.typeString();
@@ -113,7 +114,7 @@ void VariableListModel::add(const Variable& v)
     endInsertRows();
 }
 
-const QVector<Variable> &VariableListModel::variables() const
+const QVector<Variable>& VariableListModel::variables() const
 {
     return m_variables;
 }
@@ -145,6 +146,7 @@ void VariableListModel::moveDown(const QModelIndex& idx)
 {
     if (idx.isValid()) {
         int row(idx.row());
+
         if (row < rowCount() - 1) {
             QModelIndex destination(createIndex(row + 1, 0, idx.internalPointer()));
             beginMoveRows(idx, row, row, destination, rowCount());
@@ -155,7 +157,13 @@ void VariableListModel::moveDown(const QModelIndex& idx)
 
 }
 
-//--------------------------------------------------------------------------------------------------
+void VariableListModel::clear()
+{
+    beginResetModel();
+    m_variables.clear();
+    endResetModel();
+}
+
 VariableListModel::~VariableListModel()
 {
     qDebug() << "Model destroyed!";

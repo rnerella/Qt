@@ -9,17 +9,29 @@ class SettingsFile : public QSettings
 
 public:
 
-    explicit SettingsFile(QObject* prnt=nullptr);
+    explicit SettingsFile(QObject* prnt = nullptr);
 
     void setCopyrightContent(const QString& content);
 
-    QString copyrightContent(bool replacePlaceholders=true) const;
+    QString copyrightContent(bool replacePlaceholders = true) const;
 
-    QString formattedCopyrightContent() const;
+    QString formattedCopyrightContent(const QString& fileName) const;
 
     void setAddFunctionBlockSeparator(bool set);
 
     bool addFunctionBlockSeparator() const;
+
+    void setAuthorName(const QString& name);
+
+    QString authorName() const;
+
+    void setOrganisationName(const QString& orgName);
+
+    QString organisationName() const;
+
+    void setTabSize(int sz);
+
+    int tabSize() const;
 
 };
 
