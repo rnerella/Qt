@@ -17,6 +17,7 @@ const QString FUNCTION_BLOCK_SEPARATOR("functionBlockSepartor");
 const QString AUTHOR_NAME("authorName");
 const QString ORGANISATION_NAME("orgName");
 const QString TAB_SIZE("tabSize");
+const QString SAVE_LOCATION("saveLocation");
 
 }
 
@@ -99,4 +100,14 @@ void SettingsFile::setTabSize(int sz)
 int SettingsFile::tabSize() const
 {
     return value(TAB_SIZE, 4).toInt();
+}
+
+void SettingsFile::setSaveLocation(const QString& dirPath)
+{
+    setValue(SAVE_LOCATION, dirPath);
+}
+
+QString SettingsFile::saveLocation() const
+{
+    return value(SAVE_LOCATION).toString();
 }

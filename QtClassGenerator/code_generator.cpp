@@ -11,6 +11,16 @@
 namespace
 {
 
+void addFunctionBlockSeparator(QTextStream& stream)
+{
+    SettingsFile settings;
+
+    if (settings.addFunctionBlockSeparator()) {
+        QString str(98, '-');
+        stream << "//" << str << endl;
+    }
+}
+
 void appendGetterFunction(const Variable& variable, QTextStream& stream, const QString& tabStr)
 {
     stream << endl << tabStr << "inline ";
@@ -52,12 +62,7 @@ void appendSetterDeclaration(const Variable& variable, QTextStream& stream, cons
 void appendSetterDefinition(const Variable& variable, QTextStream& stream, const QString& tabStr, bool isQObject, const QString& className)
 {
     stream << endl;
-    SettingsFile settings;
-
-    if (settings.addFunctionBlockSeparator()) {
-        QString str(98, '-');
-        stream << "//" << str << endl;
-    }
+    addFunctionBlockSeparator(stream);
 
     appendSetterDeclaration(variable, stream, className);
     stream << endl << "{" << endl
@@ -79,7 +84,8 @@ CodeGenerator::CodeGenerator(QObject* prnt)
       m_baseClassName(),
       m_isQObject(true),
       m_tabString(),
-      m_generateCpp(true)
+      m_generateCpp(true),
+      m_generateFilename(true)
 {
 }
 
@@ -92,16 +98,15 @@ void CodeGenerator::setClassName(const QString& className)
 {
     m_className = className;
 
-    if (!m_className.isEmpty() && m_className.at(0).isLetter()) {
+    if (m_generateFilename && !m_className.isEmpty() && m_className.at(0).isLetter()) {
         static QRegularExpression regExp1 {"(.)([A-Z][a-z]+)"};
         static QRegularExpression regExp2 {"([a-z0-9])([A-Z])"};
 
         QString result = m_className;
         result.replace(regExp1, "\\1_\\2");
         result.replace(regExp2, "\\1_\\2");
-        setFileName(result.toLower());
-    } else {
-        setFileName(QString());
+        m_fileName = result.toLower();
+        emit fileNameGenerated(m_fileName);
     }
 }
 
@@ -181,7 +186,7 @@ void CodeGenerator::generateHeaderFileContent(QTextStream& stream)
     stream << QStringLiteral("#define ") << guardMacro << endl;
     stream << endl << endl;
 
-    if (m_baseClassName == QStringLiteral("QObject")) {
+    if (m_isQObject && m_baseClassName.isEmpty()) {
         stream << "#include <QObject>" << endl << endl;
     }
 
@@ -189,6 +194,10 @@ void CodeGenerator::generateHeaderFileContent(QTextStream& stream)
 
     if (!m_baseClassName.isEmpty()) {
         stream << " : public " << m_baseClassName;
+    } else {
+        if (m_isQObject) {
+            stream << " : public QObject";
+        }
     }
 
     stream << endl << "{" << endl;
@@ -204,6 +213,7 @@ void CodeGenerator::generateHeaderFileContent(QTextStream& stream)
 
 void CodeGenerator::generateCppFileContent(QTextStream& stream)
 {
+    ::addFunctionBlockSeparator(stream);
     stream << m_className << "::" << m_className << "(";
 
     if (m_isQObject) {
@@ -331,8 +341,21 @@ void CodeGenerator::appendSignals(QTextStream& stream)
         return;
     }
 
-    stream << "signals:" << endl << endl;
+    bool add(false);
     const auto& variables = VariableListModel::instance()->variables();
+
+    for (const auto& variable : variables) {
+        if (variable.isProperty()) {
+            add = true;
+            break;
+        }
+    }
+
+    if (!add) {
+        return;
+    }
+
+    stream << "signals:" << endl << endl;
 
     for (const auto& variable : variables) {
         if (variable.isProperty()) {
@@ -395,6 +418,22 @@ QString CodeGenerator::cppFileName() const
     }
 
     return QString();
+}
+
+bool CodeGenerator::generateFilename() const
+{
+    return m_generateFilename;
+}
+
+void CodeGenerator::setGenerateFilename(bool generateFilename)
+{
+    m_generateFilename = generateFilename;
+
+    if (m_generateFilename) {
+        setClassName(m_className);
+    }
+
+    emit generateFilenameChanged(m_generateFilename);
 }
 
 const QString& CodeGenerator::fileName() const

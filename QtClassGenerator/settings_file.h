@@ -33,6 +33,10 @@ public:
 
     int tabSize() const;
 
+    void setSaveLocation(const QString& dirPath);
+
+    QString saveLocation() const;
+
 };
 
 #endif // SETTINGS_FILE_H

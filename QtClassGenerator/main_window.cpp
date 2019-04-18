@@ -60,8 +60,10 @@ MainWindow::MainWindow(QWidget* parent) :
     auto optionsLayout = new QFormLayout(optionsPrnt);
     m_qObjectChkBox = new QCheckBox(optionsPrnt);
     auto generateCppChkBox = new QCheckBox(optionsPrnt);
+    auto generateFileNameChkbox = new QCheckBox(optionsPrnt);
     optionsLayout->addRow(tr("Is QObject:"), m_qObjectChkBox);
     optionsLayout->addRow(tr("Generate CPP:"), generateCppChkBox);
+    optionsLayout->addRow(tr("Generate File Name:"), generateFileNameChkbox);
 
     m_generateCodeButton = new QPushButton(tr("Generate"), clasDetailsPrnt);
     m_generateCodeButton->setFixedHeight(90);
@@ -149,10 +151,13 @@ MainWindow::MainWindow(QWidget* parent) :
     connect(m_addVariableButton, &QPushButton::clicked, this, &MainWindow::addVariableButtonClicked);
     connect(m_qObjectChkBox, &QCheckBox::toggled, this, &MainWindow::qObjectCheckboxToggled);
     connect(generateCppChkBox, &QCheckBox::toggled, m_codeGenerator, &CodeGenerator::setGenerateCpp);
+    connect(generateFileNameChkbox, &QCheckBox::toggled, m_codeGenerator, &CodeGenerator::setGenerateFilename);
     connect(m_errorClearTimer, &QTimer::timeout, m_errorLabel, &QLabel::clear);
     connect(m_baseClassNameInputField, &QLineEdit::textChanged, m_codeGenerator, &CodeGenerator::setBaseClassName);
-    connect(m_codeGenerator, &CodeGenerator::fileNameChanged, m_fileNameInputField, &QLineEdit::setText);
+    connect(m_fileNameInputField, &QLineEdit::textChanged, m_codeGenerator, &CodeGenerator::setFileName);
     connect(m_codeGenerator, &CodeGenerator::isQObjectChanged, m_isPropertyChkBox, &QCheckBox::setEnabled);
+    connect(m_codeGenerator, &CodeGenerator::fileNameGenerated, m_fileNameInputField, &QLineEdit::setText);
+    connect(m_codeGenerator, &CodeGenerator::generateFilenameChanged, m_fileNameInputField, &QLineEdit::setDisabled);
     connect(m_isPropertyChkBox, &QCheckBox::toggled, this, &MainWindow::qPropertyCheckboxToggled);
     connect(m_variablesTableView, &QTableView::clicked, this, &MainWindow::updateVariableEditButtons);
     connect(m_variablesTableView, &QTableView::activated, this, &MainWindow::updateVariableEditButtons);
@@ -169,12 +174,13 @@ MainWindow::MainWindow(QWidget* parent) :
 
     m_qObjectChkBox->setChecked(true);
     generateCppChkBox->setChecked(true);
-    m_fileNameInputField->setReadOnly(true);
+    generateFileNameChkbox->setChecked(true);
     m_generateCodeButton->setEnabled(false);
     m_deleteVarButton->setEnabled(false);
     m_moveUpVarButton->setEnabled(false);
     m_moveDownVarButton->setEnabled(false);
     m_addVariableButton->setEnabled(false);
+    m_fileNameInputField->setEnabled(!generateFileNameChkbox->isChecked());
 
     statusBar()->addWidget(new QLabel("Qt Class Generator | R Nerella", statusBar()), 1);
     statusBar()->addWidget(new QLabel(qApp->applicationVersion(), statusBar()));
@@ -182,10 +188,7 @@ MainWindow::MainWindow(QWidget* parent) :
     setMinimumSize(1000, 450);
 }
 
-MainWindow::~MainWindow()
-{
-    //delete VariableListModel::instance();
-}
+MainWindow::~MainWindow() = default;
 
 void MainWindow::setError(const QString& err)
 {
@@ -201,10 +204,6 @@ void MainWindow::classNameChanged(const QString& className)
     if (className.isEmpty()) {
         m_baseClassNameInputField->clear();
         m_fileNameInputField->clear();
-    } else {
-        if (m_qObjectChkBox->isChecked()) {
-            m_baseClassNameInputField->setText(QStringLiteral("QObject"));
-        }
     }
 }
 
@@ -213,7 +212,7 @@ void MainWindow::generateCodeButtonClicked()
     m_codeGenerator->setClassName(m_classNameInputField->text());
 
     if (m_codeGenerator->fileName().isEmpty()) {
-        setError(tr("Invalid / Illegal class name"));
+        setError(tr("Invalid / Illegal / Empty file name"));
     } else {
         QString path(saveLocation());
 
@@ -330,6 +329,13 @@ void MainWindow::updateVariableEditButtons()
 
 QString MainWindow::saveLocation()
 {
-    QString path(QFileDialog::getExistingDirectory(this, qApp->applicationName(), QStandardPaths::writableLocation(QStandardPaths::HomeLocation)));
+    SettingsFile settings;
+    QString dir(settings.saveLocation());
+
+    if (dir.isEmpty()) {
+        dir = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    }
+
+    QString path(QFileDialog::getExistingDirectory(this, qApp->applicationName(), dir));
     return path;
 }

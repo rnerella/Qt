@@ -39,6 +39,10 @@ public:
         return m_generateCpp;
     }
 
+    bool generateFilename() const;
+
+    void setGenerateFilename(bool generateFilename);
+
 public slots:
 
     void generate(const QString& dir);
@@ -57,6 +61,8 @@ signals:
 
     void classNameChanged(const QString& className);
 
+    void fileNameGenerated(const QString& fileName);
+
     void fileNameChanged(const QString& fileName);
 
     void isQObjectChanged(bool isQObject);
@@ -64,6 +70,8 @@ signals:
     void baseClassNameChanged(const QString& baseClassName);
 
     void generateCppChanged(bool generateCpp);
+
+    void generateFilenameChanged(bool generate);
 
 private:
 
@@ -93,6 +101,7 @@ private:
     bool        m_isQObject;
     QString     m_tabString;
     bool        m_generateCpp;
+    bool        m_generateFilename;
 };
 
 #endif // CODE_GENERATOR_H
