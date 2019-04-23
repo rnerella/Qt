@@ -117,6 +117,8 @@ MainWindow::MainWindow(QWidget* parent) :
         }
     }
 
+    m_typeCombo->model()->sort(0);
+
     auto bottomControlWidget = new QWidget(cntrlWidget);
     auto bottomLayout = new QHBoxLayout(bottomControlWidget);
     bottomLayout->addStretch(1);
