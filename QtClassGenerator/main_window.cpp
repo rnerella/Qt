@@ -61,15 +61,17 @@ MainWindow::MainWindow(QWidget* parent) :
     m_qObjectChkBox = new QCheckBox(optionsPrnt);
     auto generateCppChkBox = new QCheckBox(optionsPrnt);
     auto generateFileNameChkbox = new QCheckBox(optionsPrnt);
+    auto addSuperChkbox = new QCheckBox(optionsPrnt);
     optionsLayout->addRow(tr("Is QObject:"), m_qObjectChkBox);
     optionsLayout->addRow(tr("Generate CPP:"), generateCppChkBox);
     optionsLayout->addRow(tr("Generate File Name:"), generateFileNameChkbox);
+    optionsLayout->addRow(tr("Add super typedef:"), addSuperChkbox);
 
     m_generateCodeButton = new QPushButton(tr("Generate"), clasDetailsPrnt);
     m_generateCodeButton->setFixedHeight(90);
 
     auto mainDetailsPrnt = new QFrame(cntrlWidget);
-    mainDetailsPrnt->setFixedHeight(100);
+    mainDetailsPrnt->setFixedHeight(125);
     auto mainDetailsLayout = new QHBoxLayout(mainDetailsPrnt);
     mainDetailsLayout->addWidget(clasDetailsPrnt);
     mainDetailsLayout->addWidget(optionsPrnt);
@@ -153,6 +155,7 @@ MainWindow::MainWindow(QWidget* parent) :
     connect(m_addVariableButton, &QPushButton::clicked, this, &MainWindow::addVariableButtonClicked);
     connect(m_qObjectChkBox, &QCheckBox::toggled, this, &MainWindow::qObjectCheckboxToggled);
     connect(generateCppChkBox, &QCheckBox::toggled, m_codeGenerator, &CodeGenerator::setGenerateCpp);
+    connect(addSuperChkbox, &QCheckBox::toggled, m_codeGenerator, &CodeGenerator::setAddSuperTypedef);
     connect(generateFileNameChkbox, &QCheckBox::toggled, m_codeGenerator, &CodeGenerator::setGenerateFilename);
     connect(m_errorClearTimer, &QTimer::timeout, m_errorLabel, &QLabel::clear);
     connect(m_baseClassNameInputField, &QLineEdit::textChanged, m_codeGenerator, &CodeGenerator::setBaseClassName);
@@ -177,6 +180,7 @@ MainWindow::MainWindow(QWidget* parent) :
     m_qObjectChkBox->setChecked(true);
     generateCppChkBox->setChecked(true);
     generateFileNameChkbox->setChecked(true);
+    addSuperChkbox->setChecked(true);
     m_generateCodeButton->setEnabled(false);
     m_deleteVarButton->setEnabled(false);
     m_moveUpVarButton->setEnabled(false);

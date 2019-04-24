@@ -113,6 +113,11 @@ void CodeGenerator::generate(const QString& dir)
 {
     SettingsFile settings;
     m_tabString = QString(settings.tabSize(), ' ');
+
+    if (m_baseClassName.isEmpty() && m_isQObject) {
+        m_baseClassName = "QObject";
+    }
+
     QFile headerFile(dir + "/" + headerFileName());
 
     if (headerFile.open(QFile::WriteOnly | QFile::Text)) {
@@ -185,7 +190,7 @@ void CodeGenerator::generateHeaderFileContent(QTextStream& stream)
     stream << QStringLiteral("#define ") << guardMacro << endl;
     stream << endl << endl;
 
-    if (m_isQObject && m_baseClassName.isEmpty()) {
+    if (m_isQObject && m_baseClassName == QStringLiteral("QObject")) {
         stream << "#include <QObject>" << endl << endl;
     }
 
@@ -193,10 +198,6 @@ void CodeGenerator::generateHeaderFileContent(QTextStream& stream)
 
     if (!m_baseClassName.isEmpty()) {
         stream << " : public " << m_baseClassName;
-    } else {
-        if (m_isQObject) {
-            stream << " : public QObject";
-        }
     }
 
     stream << endl << "{" << endl;
@@ -205,6 +206,13 @@ void CodeGenerator::generateHeaderFileContent(QTextStream& stream)
     addCtrDtr(stream);
     appendSetterGetters(stream);
     appendSignals(stream);
+
+    stream << "private:" << endl << endl;
+
+    if (m_addSuperTypedef && !m_baseClassName.isEmpty()) {
+        stream << m_tabString << "using Super = " << m_baseClassName << ";" << endl << endl;
+    }
+
     appendMemberVariables(stream);
     stream << endl << "};" << endl << endl;
     stream << QStringLiteral("#endif //") << guardMacro << endl;
@@ -382,7 +390,6 @@ void CodeGenerator::appendMemberVariables(QTextStream& stream)
     const auto& variables = VariableListModel::instance()->variables();
 
     if (!variables.isEmpty()) {
-        stream << "private:" << endl << endl;
         int maxSize(0);
 
         for (const auto& variable : variables) {
