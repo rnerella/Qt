@@ -43,6 +43,10 @@ public:
 
     void setGenerateFilename(bool generateFilename);
 
+    bool addSuperTypedef() const;
+
+    void setAddSuperTypedef(bool addSuperTypedef);
+
 public slots:
 
     void generate(const QString& dir);
@@ -102,6 +106,7 @@ private:
     QString     m_tabString;
     bool        m_generateCpp;
     bool        m_generateFilename;
+    bool        m_addSuperTypedef;
 };
 
 #endif // CODE_GENERATOR_H

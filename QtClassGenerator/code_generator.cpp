@@ -23,14 +23,12 @@ void addFunctionBlockSeparator(QTextStream& stream)
 
 void appendGetterFunction(const Variable& variable, QTextStream& stream, const QString& tabStr)
 {
-    stream << endl << tabStr << "inline ";
+    stream << endl << tabStr << "inline";
+    stream << (variable.useConst() ? " const " : " ");
+    stream << variable.typeString();
+    stream << ((variable.useConst() && variable.useReference()) ? "& " : " ");
 
-    if (variable.useConst()) {
-        stream << "const";
-        stream << (variable.useReference() ? "& " : " ");
-    }
-
-    stream << variable.typeString() << " " << variable.name() << "() const" << endl
+    stream << variable.name() << "() const" << endl
            << tabStr << "{" << endl
            << tabStr << tabStr << "return m_" << variable.name() << ";" << endl
            << tabStr << "}" << endl << endl;
@@ -85,7 +83,8 @@ CodeGenerator::CodeGenerator(QObject* prnt)
       m_isQObject(true),
       m_tabString(),
       m_generateCpp(true),
-      m_generateFilename(true)
+      m_generateFilename(true),
+      m_addSuperTypedef(true)
 {
 }
 
@@ -330,7 +329,7 @@ void CodeGenerator::appendSetterGetters(QTextStream& stream)
             }
         }
 
-        stream << endl << endl;
+        stream << endl;
     }
 
 }
@@ -418,6 +417,16 @@ QString CodeGenerator::cppFileName() const
     }
 
     return QString();
+}
+
+bool CodeGenerator::addSuperTypedef() const
+{
+    return m_addSuperTypedef;
+}
+
+void CodeGenerator::setAddSuperTypedef(bool addSuperTypedef)
+{
+    m_addSuperTypedef = addSuperTypedef;
 }
 
 bool CodeGenerator::generateFilename() const
