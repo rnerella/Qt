@@ -14,13 +14,13 @@ class CodeGenerator : public QObject
     Q_PROPERTY(QString baseClassName READ baseClassName WRITE setBaseClassName NOTIFY baseClassNameChanged)
     Q_PROPERTY(bool isQObject READ isQObject WRITE setIsQObject NOTIFY isQObjectChanged)
     Q_PROPERTY(bool generateCpp READ generateCpp WRITE setGenerateCpp NOTIFY generateCppChanged)
+    Q_PROPERTY(QString namespaceName READ namespaceName WRITE setNamespaceName NOTIFY namespaceNameChanged)
 
 public:
 
     explicit CodeGenerator(QObject* prnt = nullptr);
 
     const QString& className() const;
-
 
     const QString& fileName() const;
 
@@ -47,6 +47,11 @@ public:
 
     void setAddSuperTypedef(bool addSuperTypedef);
 
+    const QString& namespaceName() const
+    {
+        return m_namespaceName;
+    }
+
 public slots:
 
     void generate(const QString& dir);
@@ -60,6 +65,8 @@ public slots:
     void setBaseClassName(const QString& baseClassName);
 
     void setGenerateCpp(bool generateCpp);
+
+    void setNamespaceName(QString namespaceName);
 
 signals:
 
@@ -76,6 +83,8 @@ signals:
     void generateCppChanged(bool generateCpp);
 
     void generateFilenameChanged(bool generate);
+
+    void namespaceNameChanged(QString namespaceName);
 
 private:
 
@@ -95,6 +104,8 @@ private:
 
     void appendMemberVariables(QTextStream& stream);
 
+    void createFileName();
+
     QString headerFileName() const;
 
     QString cppFileName() const;
@@ -107,6 +118,7 @@ private:
     bool        m_generateCpp;
     bool        m_generateFilename;
     bool        m_addSuperTypedef;
+    QString     m_namespaceName;
 };
 
 #endif // CODE_GENERATOR_H
