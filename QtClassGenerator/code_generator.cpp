@@ -248,7 +248,9 @@ void CodeGenerator::generateCppFileContent(QTextStream& stream)
     const auto& variables = VariableListModel::instance()->variables();
 
     for (const auto& variable : variables) {
-        ::appendSetterDefinition(variable, stream, m_tabString, m_isQObject, m_className);
+        if (variable.addSetter()) {
+            ::appendSetterDefinition(variable, stream, m_tabString, m_isQObject, m_className);
+        }
     }
 
     if (!m_namespaceName.isEmpty()) {
@@ -283,18 +285,31 @@ void CodeGenerator::addCtrDtr(QTextStream& stream)
 
 void CodeGenerator::appendCtrDefinition(QTextStream& stream)
 {
-    stream << endl << m_tabString << " : " << (m_addSuperTypedef ? "Super" : m_baseClassName) << "(";
-
-    if (m_isQObject) {
-        stream << "prnt";
-    }
-
-    stream << ")";
     const auto& variables = VariableListModel::instance()->variables();
 
+    if (!variables.isEmpty() || !m_baseClassName.isEmpty()) {
+        stream << endl << m_tabString << " : ";
+    }
+
+    if (!m_baseClassName.isEmpty()) {
+        stream << (m_addSuperTypedef ? "Super" : m_baseClassName) << "(";
+
+        if (m_isQObject) {
+            stream << "prnt";
+        }
+
+        stream << ")";
+    }
+
     if (!variables.isEmpty()) {
-        for (const auto& variable : variables) {
-            stream << "," << endl << m_tabString << "   " << "m_" << variable.name() << "(";
+        for (int i = 0; i < variables.size(); i++) {
+            const auto variable = variables.at(i);
+
+            if (i == 0 && m_baseClassName.isEmpty()) {
+                stream << "m_" << variable.name() << "(";
+            } else {
+                stream << "," << endl << m_tabString << "   " << "m_" << variable.name() << "(";
+            }
 
             if (variable.isPointerType()) {
                 stream << "nullptr";
