@@ -26,6 +26,8 @@ private:
 
     void setError(const QString& err);
 
+    void namespaceNameChanged(const QString& namespaceName);
+
     void classNameChanged(const QString& className);
 
     void generateCodeButtonClicked();
@@ -51,6 +53,7 @@ private:
     QLabel*             m_errorLabel;
     QTimer*             m_errorClearTimer;
     CodeGenerator*      m_codeGenerator;
+    QLineEdit*          m_namespaceNameInputField;
     QLineEdit*          m_classNameInputField;
     QLineEdit*          m_baseClassNameInputField;
     QLineEdit*          m_fileNameInputField;

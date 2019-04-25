@@ -45,13 +45,15 @@ MainWindow::MainWindow(QWidget* parent) :
     auto cntrlLayout = new QVBoxLayout(cntrlWidget);
 
     auto clasDetailsPrnt = new QFrame(cntrlWidget);
-    clasDetailsPrnt->setFixedHeight(100);
+    clasDetailsPrnt->setFixedHeight(120);
     clasDetailsPrnt->setMaximumWidth(400);
     auto classDetailsLayout = new QFormLayout(clasDetailsPrnt);
     classDetailsLayout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
+    m_namespaceNameInputField = new QLineEdit(clasDetailsPrnt);
     m_classNameInputField = new QLineEdit(clasDetailsPrnt);
     m_baseClassNameInputField = new QLineEdit(clasDetailsPrnt);
     m_fileNameInputField = new QLineEdit(clasDetailsPrnt);
+    classDetailsLayout->addRow(tr("Namespace Name: "), m_namespaceNameInputField);
     classDetailsLayout->addRow(tr("Class Name: "), m_classNameInputField);
     classDetailsLayout->addRow(tr("Base Class Name: "), m_baseClassNameInputField);
     classDetailsLayout->addRow(tr("File Name: "), m_fileNameInputField);
@@ -149,6 +151,7 @@ MainWindow::MainWindow(QWidget* parent) :
     cntrlLayout->addStretch(1);
     cntrlLayout->addWidget(m_errorLabel);
 
+    connect(m_namespaceNameInputField, &QLineEdit::textChanged, this, &MainWindow::namespaceNameChanged);
     connect(m_classNameInputField, &QLineEdit::textChanged, this, &MainWindow::classNameChanged);
     connect(m_generateCodeButton, &QPushButton::clicked, this, &MainWindow::generateCodeButtonClicked);
     connect(m_varNameInputField, &QLineEdit::textChanged, this, &MainWindow::variableNameChanged);
@@ -202,6 +205,11 @@ void MainWindow::setError(const QString& err)
     m_errorClearTimer->start();
 }
 
+void MainWindow::namespaceNameChanged(const QString& namespaceName)
+{
+    m_codeGenerator->setNamespaceName(namespaceName);
+}
+
 void MainWindow::classNameChanged(const QString& className)
 {
     m_codeGenerator->setClassName(className);
@@ -224,6 +232,7 @@ void MainWindow::generateCodeButtonClicked()
 
         if (!path.isEmpty()) {
             m_codeGenerator->generate(path);
+            m_namespaceNameInputField->clear();
             m_classNameInputField->clear();
             m_baseClassNameInputField->clear();
             m_fileNameInputField->clear();

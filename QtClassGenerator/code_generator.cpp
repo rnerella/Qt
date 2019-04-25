@@ -84,7 +84,8 @@ CodeGenerator::CodeGenerator(QObject* prnt)
       m_tabString(),
       m_generateCpp(true),
       m_generateFilename(true),
-      m_addSuperTypedef(true)
+      m_addSuperTypedef(true),
+      m_namespaceName()
 {
 }
 
@@ -97,15 +98,8 @@ void CodeGenerator::setClassName(const QString& className)
 {
     m_className = className;
 
-    if (m_generateFilename && !m_className.isEmpty() && m_className.at(0).isLetter()) {
-        static QRegularExpression regExp1 {"(.)([A-Z][a-z]+)"};
-        static QRegularExpression regExp2 {"([a-z0-9])([A-Z])"};
-
-        QString result = m_className;
-        result.replace(regExp1, "\\1_\\2");
-        result.replace(regExp2, "\\1_\\2");
-        m_fileName = result.toLower();
-        emit fileNameGenerated(m_fileName);
+    if (m_generateFilename) {
+        createFileName();
     }
 }
 
@@ -183,15 +177,28 @@ void CodeGenerator::setGenerateCpp(bool generateCpp)
     emit generateCppChanged(m_generateCpp);
 }
 
+void CodeGenerator::setNamespaceName(QString namespaceName)
+{
+    m_namespaceName = namespaceName;
+
+    if (m_generateFilename) {
+        createFileName();
+    }
+}
+
 void CodeGenerator::generateHeaderFileContent(QTextStream& stream)
 {
-    const QString guardMacro(m_className.toUpper() + "_H");
+    const QString guardMacro(m_fileName.toUpper() + "_H");
     stream << QStringLiteral("#ifndef ") << guardMacro << endl;
     stream << QStringLiteral("#define ") << guardMacro << endl;
     stream << endl << endl;
 
     if (m_isQObject && m_baseClassName == QStringLiteral("QObject")) {
         stream << "#include <QObject>" << endl << endl;
+    }
+
+    if (!m_namespaceName.isEmpty()) {
+        stream << "namespace " << m_namespaceName << endl << "{" << endl << endl;
     }
 
     stream << "class " << m_className;
@@ -215,11 +222,20 @@ void CodeGenerator::generateHeaderFileContent(QTextStream& stream)
 
     appendMemberVariables(stream);
     stream << endl << "};" << endl << endl;
+
+    if (!m_namespaceName.isEmpty()) {
+        stream << "} // namespace " << m_namespaceName << endl << endl;
+    }
+
     stream << QStringLiteral("#endif //") << guardMacro << endl;
 }
 
 void CodeGenerator::generateCppFileContent(QTextStream& stream)
 {
+    if (!m_namespaceName.isEmpty()) {
+        stream << "namespace " << m_namespaceName << endl << "{" << endl << endl;
+    }
+
     ::addFunctionBlockSeparator(stream);
     stream << m_className << "::" << m_className << "(";
 
@@ -233,6 +249,10 @@ void CodeGenerator::generateCppFileContent(QTextStream& stream)
 
     for (const auto& variable : variables) {
         ::appendSetterDefinition(variable, stream, m_tabString, m_isQObject, m_className);
+    }
+
+    if (!m_namespaceName.isEmpty()) {
+        stream << endl << "} // namespace " << m_namespaceName << endl << endl;
     }
 }
 
@@ -263,7 +283,7 @@ void CodeGenerator::addCtrDtr(QTextStream& stream)
 
 void CodeGenerator::appendCtrDefinition(QTextStream& stream)
 {
-    stream << endl << m_tabString << " : " << m_baseClassName << "(";
+    stream << endl << m_tabString << " : " << (m_addSuperTypedef ? "Super" : m_baseClassName) << "(";
 
     if (m_isQObject) {
         stream << "prnt";
@@ -405,6 +425,26 @@ void CodeGenerator::appendMemberVariables(QTextStream& stream)
         }
 
         stream << endl;
+    }
+}
+
+void CodeGenerator::createFileName()
+{
+    if (!m_className.isEmpty() && m_className.at(0).isLetter()) {
+        static QRegularExpression regExp1 {"(.)([A-Z][a-z]+)"};
+        static QRegularExpression regExp2 {"([a-z0-9])([A-Z])"};
+
+        QString result;
+
+        if (!m_namespaceName.isEmpty() && m_namespaceName.at(0).isLetter()) {
+            result.append(m_namespaceName);
+        }
+
+        result.append(m_className);
+        result.replace(regExp1, "\\1_\\2");
+        result.replace(regExp2, "\\1_\\2");
+        m_fileName = result.toLower();
+        emit fileNameGenerated(m_fileName);
     }
 }
 
