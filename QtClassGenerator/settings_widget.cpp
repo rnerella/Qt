@@ -28,6 +28,7 @@
 #include <QPlainTextEdit>
 #include <QLineEdit>
 #include <QSpinBox>
+#include <QLabel>
 #include <QDebug>
 
 SettingsWidget::SettingsWidget(QWidget* parent) : QWidget(parent)
@@ -36,6 +37,7 @@ SettingsWidget::SettingsWidget(QWidget* parent) : QWidget(parent)
     auto formLayout = new QFormLayout(this);
     auto fnBlkChkBox = new QCheckBox(this);
     fnBlkChkBox->setChecked(settings.addFunctionBlockSeparator());
+    fnBlkChkBox->setToolTip(tr("Adds //-------- before every function definition"));
     formLayout->addRow(tr("Add Function Block Separator"), fnBlkChkBox);
     connect(fnBlkChkBox, &QCheckBox::toggled, this, [](bool toggled) {
         SettingsFile settings;
@@ -66,7 +68,13 @@ SettingsWidget::SettingsWidget(QWidget* parent) : QWidget(parent)
     });
     auto copyrightText = new QPlainTextEdit(settings.copyrightContent(false), this);
     copyrightText->setMinimumSize(550, 300);
-    formLayout->addRow(tr("Copyright"), copyrightText);
+    QString info(tr("Placeholders") + QStringLiteral(": _AUTHOR_, _ORGANISATION_NAME_, _DATE_TIME_, _FILE_NAME_"));
+    auto infoLabel = new QLabel(info, this);
+    infoLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    auto copyLayout = new QVBoxLayout();
+    copyLayout->addWidget(infoLabel);
+    copyLayout->addWidget(copyrightText);
+    formLayout->addRow(tr("Copyright"), copyLayout);
     connect(copyrightText, &QPlainTextEdit::textChanged, this, [copyrightText]() {
         SettingsFile settings;
         settings.setCopyrightContent(copyrightText->toPlainText());
