@@ -1,5 +1,4 @@
-# Qt
-Qt Class Generator
+# Qt Class Generator
 
 The default Qt Creator's class generator (Add New -> C++ Class) wizard has very limited configuration options. 
 
