@@ -114,6 +114,8 @@ private:
 
     void generateCppFileContent(QTextStream& stream);
 
+    void appendIncludesAndForwardDeclares(QTextStream& stream);
+
     void addCtrDtr(QTextStream& stream);
 
     void appendCtrDefinition(QTextStream& stream);

@@ -45,7 +45,7 @@ void addFunctionBlockSeparator(QTextStream& stream)
 
 void appendGetterFunction(const Variable& variable, QTextStream& stream, const QString& tabStr)
 {
-    stream << endl << tabStr << "inline";
+    stream << tabStr << "inline";
     stream << (variable.useConst() ? " const " : " ");
     stream << variable.typeString();
     stream << ((variable.useConst() && variable.useReference()) ? "& " : " ");
@@ -53,7 +53,7 @@ void appendGetterFunction(const Variable& variable, QTextStream& stream, const Q
     stream << variable.name() << "() const" << endl
            << tabStr << "{" << endl
            << tabStr << tabStr << "return m_" << variable.name() << ";" << endl
-           << tabStr << "}" << endl << endl;
+           << tabStr << "}" << endl;
 }
 
 void appendSetterDeclaration(const Variable& variable, QTextStream& stream, const QString& className = QString())
@@ -215,9 +215,7 @@ void CodeGenerator::generateHeaderFileContent(QTextStream& stream)
     stream << QStringLiteral("#define ") << guardMacro << endl;
     stream << endl << endl;
 
-    if (m_isQObject && m_baseClassName == QStringLiteral("QObject")) {
-        stream << "#include <QObject>" << endl << endl;
-    }
+    appendIncludesAndForwardDeclares(stream);
 
     if (!m_namespaceName.isEmpty()) {
         stream << "namespace " << m_namespaceName << endl << "{" << endl << endl;
@@ -278,6 +276,50 @@ void CodeGenerator::generateCppFileContent(QTextStream& stream)
     if (!m_namespaceName.isEmpty()) {
         stream << endl << "} // namespace " << m_namespaceName << endl << endl;
     }
+}
+
+void CodeGenerator::appendIncludesAndForwardDeclares(QTextStream& stream)
+{
+    if (m_isQObject && m_baseClassName == QStringLiteral("QObject")) {
+        stream << "#include <QObject>" << endl;
+    }
+
+    const auto& variables = VariableListModel::instance()->variables();
+    if (variables.isEmpty()) {
+        stream << endl;
+        return;
+    }
+
+    QStringList includes, declares;
+    for (const auto& v : variables) {
+        auto typeName(v.typeString().remove('*').remove('&'));
+
+        //if (v.isCustomType())
+
+        if (m_isQObject && (typeName == QStringLiteral("QObject") || typeName == QStringLiteral("QString") ||
+                            typeName == QStringLiteral("QByteArray"))) {
+            continue;
+        }
+
+        if (v.isPointerType()) {
+            if (!declares.contains(v.typeString())) {
+                declares << "class " + typeName + ";";
+            }
+        } else {
+            if (!v.isCustomType() && typeName.startsWith('Q') && !includes.contains(v.typeString())) {
+                includes << "#include <" + typeName + ">";
+            }
+        }
+    }
+
+    if (!includes.isEmpty()) {
+        stream << includes.join("\r\n") << endl;
+    }
+    stream << endl;
+    if (!declares.isEmpty()) {
+        stream << declares.join("\r\n") << endl;
+    }
+    stream << endl;
 }
 
 void CodeGenerator::addCtrDtr(QTextStream& stream)
@@ -378,6 +420,21 @@ void CodeGenerator::appendSetterGetters(QTextStream& stream)
     const auto& variables = VariableListModel::instance()->variables();
 
     if (!variables.isEmpty()) {
+        bool addGetters(false);
+        bool addSetters(false);
+
+        for (const auto& variable : variables) {
+            if (variable.addGetter()) {
+                addGetters = true;
+            }
+            if (variable.addSetter()) {
+                addSetters = true;
+            }
+        }
+        if (addGetters || addSetters) {
+            stream << endl;
+        }
+
         for (const auto& variable : variables) {
             if (variable.addGetter()) {
                 ::appendGetterFunction(variable, stream, m_tabString);
