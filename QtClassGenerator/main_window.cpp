@@ -254,6 +254,8 @@ void MainWindow::generateCodeButtonClicked()
 
         if (!path.isEmpty()) {
             m_codeGenerator->generate(path);
+            SettingsFile settings;
+            settings.setSaveLocation(path);
             m_namespaceNameInputField->clear();
             m_classNameInputField->clear();
             m_baseClassNameInputField->clear();
