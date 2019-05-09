@@ -32,14 +32,12 @@ VariableListModel::VariableListModel(QObject* prnt)
 
 int VariableListModel::rowCount(const QModelIndex& idx) const
 {
-    Q_UNUSED(idx)
-    return m_variables.size();
+    return idx.isValid() ? 0 : m_variables.size();
 }
 
 int VariableListModel::columnCount(const QModelIndex& idx) const
 {
-    Q_UNUSED(idx)
-    return RoleMax;
+    return idx.isValid() ? 0 : RoleMax;
 }
 
 QVariant VariableListModel::data(const QModelIndex& idx, int role) const
